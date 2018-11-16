@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using System;
 using System.Text;
 
 namespace APIWith_JWTsSecurity
@@ -30,6 +31,7 @@ namespace APIWith_JWTsSecurity
                                                ValidateAudience = true,
                                                ValidateLifetime = true,
                                                ValidateIssuerSigningKey = true,
+                                               LifetimeValidator = CustomLifetimeValidator,
                                                ValidIssuer = Configuration["Jwt:Issuer"],
                                                ValidAudience = Configuration["Jwt:Issuer"],
                                                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"]))
@@ -37,7 +39,14 @@ namespace APIWith_JWTsSecurity
                                        });
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
-
+        private bool CustomLifetimeValidator(DateTime? notBefore, DateTime? expires, SecurityToken tokenToValidate, TokenValidationParameters @param)
+        {
+            if (expires != null)
+            {
+                return expires > DateTime.UtcNow;
+            }
+            return false;
+        }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
